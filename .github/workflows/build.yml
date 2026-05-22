@@ -6,7 +6,13 @@
 
 jobs:
   build:
-    runs-on: windows-2025
+    strategy:
+      matrix:
+        os: [ubuntu-24.04, windows-2025]  # Arbitrary atributes, matrix will go through all permutations!
+        dotnet: ["8.0.x", "9.0.x"]
+      fail-fast: false
+    
+    runs-on: ${{ matrix.os }}
 
     steps:
       - name: Checkout code
@@ -15,17 +21,18 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: "8.0.x"
+          dotnet-version: ${{ matrix.os }}
 
       - name: Build
         run: >
           dotnet build src/HelloWorld/HelloWorld.csproj
           --configuration Release
+
       - name: Publish artifact
         uses: actions/upload-artifact@v4
         with:
-          name: hello-world-build
-          path: src/HelloWorld/bin/Release/net8.0/
+          name: hello-world-${{ matrix.os }}-${{ matrix.dotnet }}
+          path: src/HelloWorld/bin/Release/
 
   deploy:
     runs-on: ubuntu-latest
@@ -33,15 +40,12 @@ jobs:
     environment: production
 
     steps:
-      - name: Download artifact
+      - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
-          name: hello-world-build
           path: ./artifact
       - name: Simulate deploy
-        run: | 
+        run: |
           echo "Deploying the following files:"
           ls ./artifact
           echo "Deploy complete."
-      - name: Secrets
-        run: echo ${{ secrets.TEST }}

@@ -43,3 +43,5 @@ jobs:
           echo "Deploying the following files:"
           ls ./artifact
           echo "Deploy complete."
+      - name: Secrets
+        run: echo ${{ secrets.TEST }}

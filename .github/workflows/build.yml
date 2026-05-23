@@ -5,13 +5,28 @@
     branches: [main]
 
 jobs:
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      build_version: ${{ steps.set_version.outputs.build_version }}
+
+    steps:
+      - name: Compute version
+        id: set_version
+        run: |
+          VERSION="1.0.${{ github.run_number }}"
+          echo "build_version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Computed Version: $VERSION"
+
   build:
+    needs: version
     strategy:
       matrix:
-        os: [ubuntu-24.04, windows-2025]  # Arbitrary atributes, matrix will go through all permutations!
+        # Arbitrary atributes, matrix will go through all permutations!
+        os: [ubuntu-24.04, windows-2025]
         dotnet: ["8.0.x", "9.0.x"]
       fail-fast: false
-    
+
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -24,28 +39,31 @@ jobs:
           dotnet-version: ${{ matrix.dotnet }}
 
       - name: Build
-        run: >
-          dotnet build src/HelloWorld/HelloWorld.csproj
-          --configuration Release
+        run: |
+          echo "Building version ${{ needs.version.outpouts.build_version }}"
+          dotnet build src/HelloWorld/HelloWorld.csproj --configuration Release
 
       - name: Publish artifact
         uses: actions/upload-artifact@v4
         with:
-          name: hello-world-${{ matrix.os }}-${{ matrix.dotnet }}
+          name: hello-world-${{ matrix.os }}-${{ matrix.dotnet }}-${{
+            needs.version.outputs.build_version }}
           path: src/HelloWorld/bin/Release/
 
   deploy:
     runs-on: ubuntu-latest
-    needs: build
+    needs: [version, build]
     environment: production
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
     steps:
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
           path: ./artifact
+
       - name: Simulate deploy
         run: |
-          echo "Deploying the following files:"
+          echo "Deploying Version ${{ needs.version.outputs.build_version }} with files:"
           ls ./artifact
           echo "Deploy complete."

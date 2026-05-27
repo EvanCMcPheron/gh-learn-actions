@@ -27,28 +27,11 @@ jobs:
         dotnet: ["8.0.x", "9.0.x"]
       fail-fast: false
 
-    runs-on: ${{ matrix.os }}
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: ${{ matrix.dotnet }}
-
-      - name: Build
-        run: |
-          echo "Building version ${{ needs.version.outpouts.build_version }}"
-          dotnet build src/HelloWorld/HelloWorld.csproj --configuration Release
-
-      - name: Publish artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: hello-world-${{ matrix.os }}-${{ matrix.dotnet }}-${{
-            needs.version.outputs.build_version }}
-          path: src/HelloWorld/bin/Release/
+    uses: ./.github/workflows/reusable-build.yml
+    with:
+      dotnet-version: ${{ matrix.dotnet }}
+      runs-on: ${{matrix.os}}
+      build-version: ${{ needs.version.outputs.build_version }}
 
   deploy:
     runs-on: ubuntu-latest

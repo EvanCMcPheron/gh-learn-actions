@@ -1,0 +1,50 @@
+"on":
+  workflow_call:
+    inputs:
+      dotnet-version:
+        required: true
+        type: string
+      runs-on:
+        required: true
+        type: string
+      build-version:
+        required: true
+        type: string
+      configuration:
+        required: false
+        type: string
+        default: Release
+    outputs:
+      artifact-name:
+        description: "Name of the Uploaded Build Artifact"
+        value: ${{ jobs.build.outputs.artifact-name }}
+
+jobs:
+  build:
+    runs-on: ${{ inputs.runs-on }}
+    outputs:
+      artifact-name: ${{ steps.set-artifact-name.outputs.artifact-name }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ inputs.dotnet-version }}
+
+      - name: Build
+        run: dotnet build src/HelloWorld/HelloWorld.csproj --configuration ${{
+          inputs.configuration }}
+
+      - name: Set Artifact Name
+        id: set-artifact-name
+        run: echo "artifact-name=hello-world-${{inputs.os}}-${{ inputs.dotnet-version
+          }}-${{ inputs.build-version }}" >> $GITHUB_OUTPUT
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact
+        with:
+          name: ${{ steps.set-artifact-name.outputs.artifact-name }}
+          path: src/HelloWorld/bin/${{ inputs.configuration }}

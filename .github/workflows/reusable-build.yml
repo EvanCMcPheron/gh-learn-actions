@@ -25,6 +25,10 @@ jobs:
     outputs:
       artifact-name: ${{ steps.set-artifact-name.outputs.artifact-name }}
 
+    defaults:
+      run:
+        shell: bash
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4

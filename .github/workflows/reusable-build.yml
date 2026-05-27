@@ -40,11 +40,11 @@ jobs:
 
       - name: Set Artifact Name
         id: set-artifact-name
-        run: echo "artifact-name=hello-world-${{inputs.os}}-${{ inputs.dotnet-version
+        run: echo "artifact-name=hello-world-${{inputs.runs-on}}-${{ inputs.dotnet-version
           }}-${{ inputs.build-version }}" >> $GITHUB_OUTPUT
 
       - name: Upload Artifact
-        uses: actions/upload-artifact
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.set-artifact-name.outputs.artifact-name }}
           path: src/HelloWorld/bin/${{ inputs.configuration }}
